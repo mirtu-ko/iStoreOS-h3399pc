@@ -19,9 +19,6 @@ env:
   CONFIG_FILE: h3399pc/.config
   DIY_P1_SH: h3399pc/diy-part1.sh
   DIY_P2_SH: h3399pc/diy-part2.sh
-  UPLOAD_BIN_DIR: true
-  UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -162,41 +159,16 @@ jobs:
         df -hT ${PWD}
         echo "status=success" >> ${GITHUB_OUTPUT}
 
-    - name: 设置 Release Tag or date
+    - name: 设置构建日期
       run: |
-        RELEASE_TAG="iStoreOS-24.10-${BOARD}-$(date +%Y-%m)"
-        echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_ENV
         BUILD_DATE="$(date +%Y.%m.%d)"
         echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_ENV
 
-    - name: 上传固件
-      uses: ncipollo/release-action@main
+    - name: 上传固件 Artifact
+      uses: actions/upload-artifact@v4
       if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
       with:
-        tag: ${{ env.RELEASE_TAG }}
-        artifacts: openwrt/output/*
-        allowUpdates: true 
-        removeArtifacts: false 
-        replacesArtifacts: true 
-        token: ${{ secrets.GITHUB_TOKEN }}
-        body: |  
-          ### iStoreOS Image Information  
-          - 💻 设备: ${{ env.BOARD }}
-          - 🧠 CPU: rk3399    
-          - 📂 源码: ${{ env.REPO_URL }}
-          - 🌳 分支: ${{ env.REPO_BRANCH }}  
-          - ⏱️ 编译时间: ${{ env.BUILD_DATE }}
-          - 👤 用户名: root
-          - 🔒 密码: password
-          - 📒 说明: 如果设备只有一个网口，则此网口就是 `LAN` ；如果设备有两个网口，则一个是 `WAN`，一个是`LAN`，需要接入主路由器后进后台查找对应IP地址再访问。
-          ### iStoreOS Image Verification  
-          - sha256sum   
-        draft: false  
-        prerelease: false
-
-    - name: 删除自动发布的旧固件
-      uses: dev-drprasad/delete-older-releases@v0.3.3
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 15
-        delete_tags: true
+        name: h3399pc-firmware-${{ env.BUILD_DATE }}
+        path: openwrt/output/*
+        if-no-files-found: error
+        retention-days: 14
