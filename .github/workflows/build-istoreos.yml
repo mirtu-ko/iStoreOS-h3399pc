@@ -1,46 +1,24 @@
 name: Build iStore OS
 
 on:
-  repository_dispatch:
   workflow_dispatch:
     inputs:
       ssh:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-      board:
-        description: "Select device board"
-        required: false
-        default: "fnet3399"
-        type: choice
-        options:
-          - am40
-          - dg3399
-          - dlfr100
-          - fine3399
-          - fmx1-pro
-          - fnet3399
-          - h3399pc
-          - king3399
-          - mpc1903
-          - sv901-eaio
-          - sv-33a6x
-          - tn3399
-          - tpm-312
-          - tvi3315a
-          - xiaobao-nas
-          - zysj-1739a
   #schedule:
   # - cron: 0 16 * * 4          
   # #     分,时,日,月,周。每周五 20时执行一次 (UTC时间)
 
 env:
+  BOARD: h3399pc
   REPO_URL: https://github.com/istoreos/istoreos
-  # REPO_BRANCH: main
+  REPO_BRANCH: istoreos-24.10
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: ${{ inputs.board }}/.config
-  DIY_P1_SH: ${{ inputs.board }}/diy-part1.sh
-  DIY_P2_SH: ${{ inputs.board }}/diy-part2.sh
+  CONFIG_FILE: h3399pc/.config
+  DIY_P1_SH: h3399pc/diy-part1.sh
+  DIY_P2_SH: h3399pc/diy-part2.sh
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -49,18 +27,7 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        REPO_BRANCH:
-          # - istoreos-22.03
-          - istoreos-24.10
-        ARCHITECTURE:
-          - aarch64_cortex-a53
-        os:
-          - ubuntu-22.04
-
-      fail-fast: false
+    runs-on: ubuntu-22.04
 
     steps:
     - name: 准备完成
@@ -88,7 +55,7 @@ jobs:
         echo "------------------------------- 更新并安装依赖 -------------------------------"
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(cat $GITHUB_WORKSPACE/depends/${{ matrix.os }})
+        sudo -E apt-get -qq install $(cat $GITHUB_WORKSPACE/depends/ubuntu-22.04)
         wget https://bootstrap.pypa.io/pip/3.6/get-pip.py
         sudo python3 get-pip.py
         sudo rm -rf get-pip.py
@@ -107,14 +74,14 @@ jobs:
       working-directory: /mnt/workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b ${{ matrix.REPO_BRANCH }} openwrt
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /mnt/workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: 缓存构建动作
       uses: klever1988/cachewrtbuild@main
       with:
         ccache: 'true'
-        mixkey: ${{ matrix.os }}-${{ matrix.ARCHITECTURE }}-${{ matrix.REPO_BRANCH }}
+        mixkey: ubuntu-22.04-aarch64_cortex-a53-${{ env.REPO_BRANCH }}-${{ env.BOARD }}
         prefix: ${{ github.workspace }}/openwrt
 
     - name: 加载自定义 feeds
@@ -157,7 +124,7 @@ jobs:
        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         
-    - name: 编译固件 [ ${{ inputs.board }} ]
+    - name: 编译固件 [ ${{ env.BOARD }} ]
       id: compile
       run: |
         cd openwrt
@@ -197,7 +164,7 @@ jobs:
 
     - name: 设置 Release Tag or date
       run: |
-        RELEASE_TAG="iStoreOS-24.10-RK3399-$(date +%Y-%m)"
+        RELEASE_TAG="iStoreOS-24.10-${BOARD}-$(date +%Y-%m)"
         echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_ENV
         BUILD_DATE="$(date +%Y.%m.%d)"
         echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_ENV
@@ -214,9 +181,10 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         body: |  
           ### iStoreOS Image Information  
-          - 💻 CPU: rk3399    
+          - 💻 设备: ${{ env.BOARD }}
+          - 🧠 CPU: rk3399    
           - 📂 源码: ${{ env.REPO_URL }}
-          - 🌳 分支: ${{ matrix.REPO_BRANCH }}  
+          - 🌳 分支: ${{ env.REPO_BRANCH }}  
           - ⏱️ 编译时间: ${{ env.BUILD_DATE }}
           - 👤 用户名: root
           - 🔒 密码: password
