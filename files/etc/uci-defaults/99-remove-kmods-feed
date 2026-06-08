@@ -1,9 +1,0 @@
-#!/bin/sh
-
-DISTFEEDS="/etc/opkg/distfeeds.conf"
-
-if [ -f "$DISTFEEDS" ]; then
-	sed -i '/^[[:space:]]*src\/gz[[:space:]]\+openwrt_kmods[[:space:]]/d' "$DISTFEEDS"
-fi
-
-exit 0
