@@ -21,7 +21,7 @@
 | RK3399-dev     | h3399pc |
 
 > [!TIP]
-> 当前仓库已按 `h3399pc` 单设备维护，GitHub Actions 工作流仅支持手动编译该设备固件。
+> 当前仓库fork自：https://github.com/Lemon1151/iStoreOS-RK3399 ，已按 `h3399pc` 单设备维护，GitHub Actions 工作流仅支持手动编译该设备固件。
 
 
 ## 默认配置
