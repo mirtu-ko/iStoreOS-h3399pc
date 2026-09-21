@@ -11,3 +11,10 @@ src-git linkease_nas https://github.com/linkease/nas-packages.git;master
 src-git linkease_nas_luci https://github.com/linkease/nas-packages-luci.git;main
 # OpenAppFilter
 src-git oaf https://github.com/jjm2473/OpenAppFilter.git;dev4
+
+# passwall2
+src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
+src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git;main
+
+# nikki
+src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main
