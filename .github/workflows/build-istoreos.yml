@@ -85,8 +85,22 @@ jobs:
       working-directory: /mnt/workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth 1 --branch $REPO_BRANCH $REPO_URL openwrt
         ln -sf /mnt/workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: 恢复构建缓存
+      uses: actions/cache/restore@v4
+      id: cache-restore
+      with:
+        path: |
+          openwrt/dl
+          openwrt/feeds
+          openwrt/staging_dir
+          openwrt/build_dir/toolchain-*
+          openwrt/.ccache
+        key: ${{ runner.os }}-openwrt-${{ env.REPO_BRANCH }}-${{ hashFiles('h3399pc/.config') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-${{ env.REPO_BRANCH }}-
 
     - name: 加载自定义 feeds
       env:
@@ -139,6 +153,18 @@ jobs:
         echo "FILE_DATE=_$(date +"%Y%m%d")" >> $GITHUB_ENV
         echo "status=success" >> ${GITHUB_OUTPUT}
 
+
+    - name: 保存构建缓存
+      if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          openwrt/dl
+          openwrt/feeds
+          openwrt/staging_dir
+          openwrt/build_dir/toolchain-*
+          openwrt/.ccache
+        key: ${{ runner.os }}-openwrt-${{ env.REPO_BRANCH }}-${{ hashFiles('h3399pc/.config') }}
     - name: 清理并复制固件到对应目录
       id: clean
       if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
