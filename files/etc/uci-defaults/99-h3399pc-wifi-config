@@ -1,0 +1,30 @@
+#!/bin/sh
+# H3399PC 首次启动: 探测 BCM43455 radio 并开启开放AP (SSID=H3399PC, 无密码)
+# 需在 99-h3399pc-wifi(nvram 软链)之后执行
+
+# 已有无线配置则不动
+if [ -s /etc/config/wireless ]; then
+  exit 0
+fi
+
+/sbin/wifi config 2>/dev/null
+
+if ! uci get wireless.radio0 >/dev/null 2>&1; then
+  exit 0
+fi
+
+uci set wireless.radio0.disabled='0'
+uci set wireless.radio0.country='CN'
+uci set wireless.radio0.channel='auto'
+
+uci delete wireless.default_radio0 2>/dev/null
+uci set wireless.default_radio0=wifi-iface
+uci set wireless.default_radio0.device='radio0'
+uci set wireless.default_radio0.network='lan'
+uci set wireless.default_radio0.mode='ap'
+uci set wireless.default_radio0.ssid='H3399PC'
+uci set wireless.default_radio0.encryption='none'
+
+uci commit wireless
+
+exit 0
