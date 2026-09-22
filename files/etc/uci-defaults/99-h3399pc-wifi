@@ -1,0 +1,12 @@
+#!/bin/sh
+# H3399PC BCM43455 SDIO WiFi: 创建 nvram 软链,保证刷机/升级后 wlan0 能加载
+BRCM=/lib/firmware/brcm
+SRC="$BRCM/brcmfmac43455-sdio.AW-CM256SM.txt"
+
+[ -d "$BRCM" ] || exit 0
+[ -f "$SRC" ] || exit 0
+
+[ -e "$BRCM/brcmfmac43455-sdio.txt" ] || ln -s "brcmfmac43455-sdio.AW-CM256SM.txt" "$BRCM/brcmfmac43455-sdio.txt"
+[ -e "$BRCM/brcmfmac43455-sdio.sharevdi,h3399pc.txt" ] || ln -s "brcmfmac43455-sdio.AW-CM256SM.txt" "$BRCM/brcmfmac43455-sdio.sharevdi,h3399pc.txt"
+
+exit 0
